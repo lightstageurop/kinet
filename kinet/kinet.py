@@ -5,12 +5,14 @@ import struct
 import random
 import errno
 
+
 class MetaStruct(type):
     def __new__(cls, name, parents, dct):
         struct = dct.get("Struct", tuple())
         keys = [st[0] for st in struct]
         dct["Keys"] = set(keys)
         return super(MetaStruct, cls).__new__(cls, name, parents, dct)
+
 
 class KinetHeader(metaclass=MetaStruct):
     Struct = ()
@@ -82,7 +84,6 @@ class KinetHeader(metaclass=MetaStruct):
             self[key] = val
         self._packed_data = None
 
-
     def __bytes__(self):
         return self.pack()
 
@@ -102,6 +103,7 @@ class KinetHeader(metaclass=MetaStruct):
     def unpack(self, packed_data):
         self._unpacked_data = list(self._struct.unpack(packed_data))
 
+
 class DiscoverSupplies(KinetHeader):
     Struct = (
         ("magic", "I", 0x0401dc4a),
@@ -111,6 +113,7 @@ class DiscoverSupplies(KinetHeader):
         ("command", "I", 0xc0a80189),
     )
 
+
 class DiscoverFixturesSerialRequest(KinetHeader):
     Struct = (
         ("magic", "I", 0x0401dc4a),
@@ -118,6 +121,7 @@ class DiscoverFixturesSerialRequest(KinetHeader):
         ("type", "H", 0x0102),
         ("ip_address", "4B", None),
     )
+
 
 class DiscoverFixturesSerialReply(KinetHeader):
     Struct = (
@@ -128,6 +132,7 @@ class DiscoverFixturesSerialReply(KinetHeader):
         ("serial", "I", None),
     )
 
+
 class DiscoverFixturesChannelRequest(KinetHeader):
     Struct = (
         ("magic", "I", 0x0401dc4a),
@@ -137,6 +142,7 @@ class DiscoverFixturesChannelRequest(KinetHeader):
         ("serial", "I", None),
         ("something", "H", 0x4100),
     )
+
 
 class DiscoverFixturesChannelReply(KinetHeader):
     Struct = (
@@ -167,6 +173,7 @@ class DiscoverySuppliesReply(KinetHeader):
         ("zero_2", "H", None),
     )
 
+
 class Header(KinetHeader):
     Struct = (
         ("magic", "I", 0x0401dc4a),
@@ -179,6 +186,7 @@ class Header(KinetHeader):
         ("timer", "I", 0xffffffff),
         ("universe", "B", 0x00),
     )
+
 
 class Discover(object):
     BroadcastAddress = "255.255.255.255"
@@ -211,6 +219,7 @@ class Discover(object):
             reply.unpack(data)
             yield reply
 
+
 class PowerSupply(list):
     def __init__(self, host, header=None, port=6038, sock=None, timeout=1):
         super(PowerSupply, self).__init__()
@@ -233,7 +242,6 @@ class PowerSupply(list):
         for serial in self.discover_fixtures_serial():
             channel = self.discover_fixtures_channel(serial)
             print(serial, channel)
-
 
     def discover_fixtures_serial(self):
         ip_addr = map(int, self.host.split('.'))
@@ -289,9 +297,11 @@ class PowerSupply(list):
         data = bytes(self.header) + struct.pack('512B', *data)
         self.socket.send(data)
 
+
 class Fixture(object):
     def __init__(self, address):
         self.address = address
+
 
 class FixtureRGB(Fixture):
     _RED = (0, 0xff)
@@ -311,16 +321,23 @@ class FixtureRGB(Fixture):
         return compare(self.address, other.address)
 
     def __getitem__(self, color):
-        if color == 0: return self.red
-        if color == 1: return self.green
-        if color == 2: return self.blue
+        if color == 0:
+            return self.red
+        if color == 1:
+            return self.green
+        if color == 2:
+            return self.blue
         raise ValueError(color)
 
     def __setitem__(self, color, value):
-        if color == 0: self.red = value
-        elif color == 1: self.green = value
-        elif color == 2: self.blue = value
-        else: raise ValueError(color)
+        if color == 0:
+            self.red = value
+        elif color == 1:
+            self.green = value
+        elif color == 2:
+            self.blue = value
+        else:
+            raise ValueError(color)
 
     def ascii(self):
         chars = [chr(ord('0') + x) for x in range(10)]
@@ -343,12 +360,14 @@ class FixtureRGB(Fixture):
 
     def get_red(self):
         return self._red
+
     def set_red(self, val):
         self._red = max(self._RED[0], min(self._RED[1], int(val)))
     red = property(get_red, set_red)
 
     def get_green(self):
         return self._green
+
     def set_green(self, val):
         self._green = max(self._GRN[0], min(self._GRN[1], int(val)))
     green = property(get_green, set_green)
@@ -356,6 +375,7 @@ class FixtureRGB(Fixture):
 
     def get_blue(self):
         return self._blue
+
     def set_blue(self, val):
         self._blue = max(self._BLU[0], min(self._BLU[1], int(val)))
     blue = property(get_blue, set_blue)
@@ -363,6 +383,7 @@ class FixtureRGB(Fixture):
 
     def get_rgb(self):
         return (self.red, self.green, self.blue)
+
     def set_rgb(self, rgb):
         self.red = (self._RED[1] * rgb[0])
         self.green = (self._GRN[1] * rgb[1])
@@ -387,6 +408,7 @@ class FixtureRGB(Fixture):
     def clear(self):
         self.rgb = (self._RED[0], self._GRN[0], self._BLU[0])
 
+
 class FadeIter(object):
     def __init__(self, old_patch, new_patch, ttl):
         self.old_patch = old_patch
@@ -399,7 +421,8 @@ class FadeIter(object):
         for fidx, fixture in enumerate(self.old_patch):
             slopes = []
             for channel, level in enumerate(fixture):
-                distance = self.new_patch[fidx][channel] - self.old_patch[fidx][channel]
+                distance = self.new_patch[fidx][channel] - \
+                    self.old_patch[fidx][channel]
                 slopes.append(distance / float(self.ttl))
             self.slopes.append(slopes)
 
