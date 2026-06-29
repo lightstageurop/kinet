@@ -4,10 +4,13 @@ import time
 import struct
 import random
 
+
 class Header(object):
-    Order = ["magic", "version", "type", "sequence", "port", "padding", "flags", "timer", "uni"]
+    Order = ["magic", "version", "type", "sequence",
+             "port", "padding", "flags", "timer", "uni"]
     Struct = ">IHHIBBHIB"
-    Defaults = [0x0401dc4a, 0x0100, 0x0101, 0x00000000, 0x00, 0x00, 0x0000, 0xffffffff, 0x00]
+    Defaults = [0x0401dc4a, 0x0100, 0x0101, 0x00000000,
+                0x00, 0x00, 0x0000, 0xffffffff, 0x00]
 
     def __init__(self, **kw):
         defaults = dict(zip(self.Order, self.Defaults))
@@ -26,6 +29,7 @@ class Header(object):
         super(Header, self).__setattr__(name, value)
         if name in self.Order:
             self.__update()
+
 
 class PowerSupply(list):
     def __init__(self, host, header=None, port=6038, sock=None):
@@ -69,10 +73,12 @@ class PowerSupply(list):
                 data[addr + idx] = val
         data = str(self.header) + struct.pack('512B', *data)
         self.socket.send(data)
-    
+
+
 class Fixture(object):
     def __init__(self, address):
         self.address = address
+
 
 class FixtureRGB(Fixture):
     _RED = (0, 0xff)
@@ -92,16 +98,23 @@ class FixtureRGB(Fixture):
         return compare(self.address, other.address)
 
     def __getitem__(self, color):
-        if color == 0: return self.red
-        if color == 1: return self.green
-        if color == 2: return self.blue
+        if color == 0:
+            return self.red
+        if color == 1:
+            return self.green
+        if color == 2:
+            return self.blue
         raise ValueError, color
 
     def __setitem__(self, color, value):
-        if color == 0: self.red = value
-        elif color == 1: self.green = value
-        elif color == 2: self.blue = value
-        else: raise ValueError, color
+        if color == 0:
+            self.red = value
+        elif color == 1:
+            self.green = value
+        elif color == 2:
+            self.blue = value
+        else:
+            raise ValueError, color
 
     def ascii(self):
         chars = [chr(ord('0') + x) for x in range(10)]
@@ -122,21 +135,24 @@ class FixtureRGB(Fixture):
     def __str__(self):
         return '[%03d %03d %03d]' % tuple(self)
 
-    def get_red(self): 
+    def get_red(self):
         return self._red
+
     def set_red(self, val):
         self._red = max(self._RED[0], min(self._RED[1], int(val)))
     red = property(get_red, set_red)
 
-    def get_green(self): 
+    def get_green(self):
         return self._green
+
     def set_green(self, val):
         self._green = max(self._GRN[0], min(self._GRN[1], int(val)))
     green = property(get_green, set_green)
     grn = property(get_green, set_green)
 
-    def get_blue(self): 
+    def get_blue(self):
         return self._blue
+
     def set_blue(self, val):
         self._blue = max(self._BLU[0], min(self._BLU[1], int(val)))
     blue = property(get_blue, set_blue)
@@ -144,6 +160,7 @@ class FixtureRGB(Fixture):
 
     def get_rgb(self):
         return (self.red, self.green, self.blue)
+
     def set_rgb(self, rgb):
         self.red = rgb[0]
         self.green = rgb[1]
@@ -151,9 +168,9 @@ class FixtureRGB(Fixture):
     rgb = property(get_rgb, set_rgb)
 
     def get_hsv(self):
-        red = self.red / float(self._RED[1]) 
-        green = self.green / float(self._GRN[1]) 
-        blue = self.blue / float(self._BLU[1]) 
+        red = self.red / float(self._RED[1])
+        green = self.green / float(self._GRN[1])
+        blue = self.blue / float(self._BLU[1])
         rgb = (red, green, blue)
         hsv = colorsys.rgb_to_hsv(*rgb)
         return hsv
@@ -168,6 +185,7 @@ class FixtureRGB(Fixture):
     def clear(self):
         self.rgb = (self._RED[0], self._GRN[0], self._BLU[0])
 
+
 class FadeIter(object):
     def __init__(self, old_patch, new_patch, ttl):
         self.old_patch = old_patch
@@ -180,7 +198,8 @@ class FadeIter(object):
         for fidx, fixture in enumerate(self.old_patch):
             slopes = []
             for channel, level in enumerate(fixture):
-                distance = self.new_patch[fidx][channel] - self.old_patch[fidx][channel]
+                distance = self.new_patch[fidx][channel] - \
+                    self.old_patch[fidx][channel]
                 slopes.append(distance / float(self.ttl))
             self.slopes.append(slopes)
 
