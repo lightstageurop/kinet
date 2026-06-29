@@ -1,0 +1,5 @@
+.*DS*
+*.pyc
+.*.swp
+kinet.egg-info
+dist
