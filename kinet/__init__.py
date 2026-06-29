@@ -1,1 +1,1 @@
-from kinet import *
+from .kinet import *

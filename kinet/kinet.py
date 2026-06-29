@@ -12,11 +12,9 @@ class MetaStruct(type):
         dct["Keys"] = set(keys)
         return super(MetaStruct, cls).__new__(cls, name, parents, dct)
 
-class KinetHeader(object):
+class KinetHeader(metaclass=MetaStruct):
     Struct = ()
     Flags = ">"
-
-    __metaclass__ = MetaStruct
 
     def __init__(self, packed_data=None, **kw):
         self._struct = struct.Struct(self.struct_format)
@@ -24,7 +22,7 @@ class KinetHeader(object):
         self._build_index()
         self._unpacked_data = []
         if packed_data == None:
-            packed_data = ('\0' * self._struct.size)
+            packed_data = (b'\0' * self._struct.size)
             self.unpack(packed_data)
             self.update(self.defaults)
         else:
@@ -85,8 +83,11 @@ class KinetHeader(object):
         self._packed_data = None
 
 
-    def __str__(self):
+    def __bytes__(self):
         return self.pack()
+
+    def __str__(self):
+        return repr(self)
 
     def __repr__(self):
         vals = {key: self[key] for key in self._index}
@@ -194,9 +195,9 @@ class Discover(object):
         self.header = header
 
     def discover(self):
-        self.socket.sendto(str(self.header), (self.host, self.port))
+        self.socket.sendto(bytes(self.header), (self.host, self.port))
         for reply in self.gather():
-            print repr(reply)
+            print(repr(reply))
 
     def gather(self):
         replies = []
@@ -231,7 +232,7 @@ class PowerSupply(list):
     def discover(self):
         for serial in self.discover_fixtures_serial():
             channel = self.discover_fixtures_channel(serial)
-            print serial, channel
+            print(serial, channel)
 
 
     def discover_fixtures_serial(self):
@@ -285,7 +286,7 @@ class PowerSupply(list):
             addr = fixture.address
             for idx, val in enumerate(fixture):
                 data[addr + idx] = val
-        data = str(self.header) + struct.pack('512B', *data)
+        data = bytes(self.header) + struct.pack('512B', *data)
         self.socket.send(data)
 
 class Fixture(object):
@@ -313,13 +314,13 @@ class FixtureRGB(Fixture):
         if color == 0: return self.red
         if color == 1: return self.green
         if color == 2: return self.blue
-        raise ValueError, color
+        raise ValueError(color)
 
     def __setitem__(self, color, value):
         if color == 0: self.red = value
         elif color == 1: self.green = value
         elif color == 2: self.blue = value
-        else: raise ValueError, color
+        else: raise ValueError(color)
 
     def ascii(self):
         chars = [chr(ord('0') + x) for x in range(10)]
